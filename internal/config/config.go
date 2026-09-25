@@ -24,7 +24,7 @@ type config struct {
 	Vllm   VllmConfig
 }
 
-func load() (config, error) {
+func Load() (config, error) {
 	cfg := config{}
 	if err := env.FieldParams(&cfg); err != nil {
 		return config{}, err
