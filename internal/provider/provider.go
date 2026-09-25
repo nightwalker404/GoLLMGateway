@@ -30,7 +30,7 @@ type Usage struct {
 	TotalTokens      int `json:"total_tokens"`
 }
 
-type provider interface {
+type Provider interface {
 	Name() string
 	Chat(ctx context.Context, req ChatRequest) (*ChatResponse, error)
 }
