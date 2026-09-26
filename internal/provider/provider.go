@@ -32,5 +32,7 @@ type Usage struct {
 
 type Provider interface {
 	Name() string
+	AllowedModels() []string
+	IsModelAllowed(model string) bool
 	Chat(ctx context.Context, req ChatRequest) (*ChatResponse, error)
 }
