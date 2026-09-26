@@ -106,12 +106,12 @@ func (c *Client) Chat(ctx context.Context, req provider.ChatRequest) (*provider.
 		} `json:"usage"`
 	}
 
-	if len(vllmResp.Choices) == 0 {
-		return nil, fmt.Errorf("vllm returned no choices")
-	}
-
 	if err := json.NewDecoder(resp.Body).Decode(&vllmResp); err != nil {
 		return nil, fmt.Errorf("decode vllm response: %w", err)
+	}
+
+	if len(vllmResp.Choices) == 0 {
+		return nil, fmt.Errorf("vllm returned no choices")
 	}
 
 	return &provider.ChatResponse{
