@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -11,12 +12,14 @@ import (
 type OllamaConfig struct {
 	BaseURL string        `env:"OLLAMA_BASE_URL" envDefault:"http://localhost:11434"`
 	Timeout time.Duration `env:"OLLAMA_TIMEOUT" envDefault:"60s"`
+	Models  []string      `env:"OLLAMA_MODELS" envSeparator:","`
 }
 
 type VLLMConfig struct {
 	BaseURL string        `env:"VLLM_BASE_URL" envDefault:"http://localhost:8000"`
 	APIKey  string        `env:"VLLM_API_KEY"`
 	Timeout time.Duration `env:"VLLM_TIMEOUT" envDefault:"60s"`
+	Models  []string      `env:"VLLM_MODELS" envSeparator:","`
 }
 
 type Config struct {
@@ -33,12 +36,26 @@ var (
 	err  error
 )
 
+func cleanModels(models []string) []string {
+	result := make([]string, 0, len(models))
+	for _, m := range models {
+		m = strings.TrimSpace(m)
+		if m != "" {
+			result = append(result, m)
+		}
+	}
+	return result
+}
+
 func Load() (Config, error) {
 	once.Do(func() {
 		cfg = Config{}
 		if err = env.Parse(&cfg); err != nil {
 			return
 		}
+
+		cfg.Ollama.Models = cleanModels(cfg.Ollama.Models)
+		cfg.VLLM.Models = cleanModels(cfg.VLLM.Models)
 
 		if cfg.DefaultProvider != "ollama" && cfg.DefaultProvider != "vllm" {
 			err = fmt.Errorf("DEFAULT_PROVIDER must be 'ollama' or 'vllm', got %q", cfg.DefaultProvider)
