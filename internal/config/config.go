@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/caarlos0/env/v11"
+	"github.com/joho/godotenv"
 )
 
 type OllamaConfig struct {
@@ -49,6 +50,8 @@ func cleanModels(models []string) []string {
 
 func Load() (Config, error) {
 	once.Do(func() {
+		_ = godotenv.Load()
+
 		cfg = Config{}
 		if err = env.Parse(&cfg); err != nil {
 			return
