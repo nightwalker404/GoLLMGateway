@@ -19,14 +19,25 @@ func main() {
 		os.Exit(1)
 	}
 
-	baseURL := "http://localhost" + cfg.ServerAddr // e.g. http://localhost:8080
+	fmt.Printf("Ollama models: %#v\n", cfg.Ollama.Models)
+	fmt.Printf("vLLM models:   %#v\n", cfg.VLLM.Models)
+
+	baseURL := "http://localhost" + cfg.ServerAddr
 
 	fmt.Println("=== Testing LLM Gateway ===")
 	fmt.Printf("Gateway URL: %s\n", baseURL)
 	fmt.Printf("Default Provider: %s\n\n", cfg.DefaultProvider)
 
+	// Test List Models
+	fmt.Println("→ Testing /v1/models...")
+	if err := testListModels(baseURL); err != nil {
+		fmt.Printf("  ListModels failed: %v\n", err)
+	} else {
+		fmt.Println("  ListModels OK")
+	}
+
 	// Test Ollama
-	fmt.Println("→ Testing Ollama...")
+	fmt.Println("\n→ Testing Ollama...")
 	if err := testChat(baseURL, "ollama", "llama3.2:3b"); err != nil {
 		fmt.Printf("  Ollama failed: %v\n", err)
 	} else {
@@ -72,5 +83,24 @@ func testChat(baseURL, provider, model string) error {
 	}
 
 	fmt.Printf("  Response: %s\n", string(respBody))
+	return nil
+}
+
+func testListModels(baseURL string) error {
+	client := &http.Client{Timeout: 10 * time.Second}
+
+	resp, err := client.Get(baseURL + "/v1/models")
+	if err != nil {
+		return fmt.Errorf("request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(resp.Body)
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("status %d: %s", resp.StatusCode, string(body))
+	}
+
+	fmt.Printf("  Models: %s\n", string(body))
 	return nil
 }
