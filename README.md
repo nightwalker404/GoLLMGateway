@@ -1,2 +1,10 @@
 # GoLLMGateway
-create a AI gateway by go which is custom for my  future projects
+Simple, maintainable Go gateway for **Ollama** and **vLLM**.
+
+## Quick start
+
+```bash
+cp .env.example .env
+# edit .env if needed
+
+make run
