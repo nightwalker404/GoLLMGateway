@@ -29,6 +29,7 @@ func NewServer(cfg *config.Config, gw *gateway.Gateway) *Server {
 
 	mux.HandleFunc("/health", h.Health)
 	mux.HandleFunc("/v1/chat/completions", h.Chat)
+	mux.HandleFunc("/v1/models", h.ListModels)
 	mux.HandleFunc("/chat", h.Chat)
 
 	return &Server{
