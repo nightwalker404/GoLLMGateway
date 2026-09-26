@@ -40,13 +40,13 @@ func (g *Gateway) ListModels() map[string][]string {
 	return result
 }
 
-func (g *Gateway) Chat(ctx context.Context, providerName string, req provider.ChatRequest, modelName string) (*provider.ChatResponse, error) {
+func (g *Gateway) Chat(ctx context.Context, providerName string, req provider.ChatRequest) (*provider.ChatResponse, error) {
 	p, err := g.getProvider(providerName)
 	if err != nil {
 		return nil, err
 	}
 
-	if !p.IsModelAllowed(modelName) {
+	if !p.IsModelAllowed(req.Model) {
 		return nil, fmt.Errorf("model %q is not allowed for provider %s", req.Model, p.Name())
 	}
 
