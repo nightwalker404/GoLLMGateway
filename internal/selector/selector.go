@@ -7,7 +7,7 @@ import (
 )
 
 type Selection struct {
-	Provider provider.Provider `json:"provider"`
+	Provider provider.Provider `json:"-"`
 	Model    string            `json:"model"`
 }
 
