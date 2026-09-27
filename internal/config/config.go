@@ -23,12 +23,21 @@ type VLLMConfig struct {
 	Models  []string      `env:"VLLM_MODELS" envSeparator:","`
 }
 
+type SelectorConfig struct {
+	Provider         string        `env:"SELECTOR_PROVIDER" envDefault:"vllm"`
+	Model            string        `env:"SELECTOR_MODEL" envDefault:"Qwen/Qwen2.5-0.5B-Instruct"`
+	Timeout          time.Duration `env:"SELECTOR_TIMEOUT" envDefault:"5s"`
+	FallbackProvider string        `env:"SELECTOR_FALLBACK_PROVIDER" envDefault:"ollama"`
+	FallbackModel    string        `env:"SELECTOR_FALLBACK_MODEL" envDefault:"llama3.2:3b"`
+}
+
 type Config struct {
 	ServerAddr      string `env:"SERVER_ADDR" envDefault:":8080"`
 	DefaultProvider string `env:"DEFAULT_PROVIDER" envDefault:"ollama"`
 
-	Ollama OllamaConfig
-	VLLM   VLLMConfig
+	Ollama   OllamaConfig
+	VLLM     VLLMConfig
+	Selector SelectorConfig
 }
 
 var (
@@ -59,6 +68,8 @@ func Load() (Config, error) {
 
 		cfg.Ollama.Models = cleanModels(cfg.Ollama.Models)
 		cfg.VLLM.Models = cleanModels(cfg.VLLM.Models)
+		cfg.Selector.Provider = strings.ToLower(cfg.Selector.Provider)
+		cfg.Selector.FallbackProvider = strings.ToLower(cfg.Selector.FallbackProvider)
 
 		if cfg.DefaultProvider != "ollama" && cfg.DefaultProvider != "vllm" {
 			err = fmt.Errorf("DEFAULT_PROVIDER must be 'ollama' or 'vllm', got %q", cfg.DefaultProvider)
