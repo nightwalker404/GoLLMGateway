@@ -6,30 +6,40 @@ import (
 
 	"github.com/nightwalker404/llm-gateway/internal/config"
 	"github.com/nightwalker404/llm-gateway/internal/provider"
+	"github.com/nightwalker404/llm-gateway/internal/selector"
 )
 
 type Gateway struct {
 	cfg       *config.Config
 	providers map[string]provider.Provider
+	selector  selector.Selector
 }
 
-func New(cfg *config.Config, providers map[string]provider.Provider) *Gateway {
+func New(cfg *config.Config, providers map[string]provider.Provider, sel selector.Selector) *Gateway {
 	return &Gateway{
 		cfg:       cfg,
 		providers: providers,
+		selector:  sel,
 	}
 }
 
-func (g *Gateway) getProvider(name string) (provider.Provider, error) {
-	if name == "" {
-		name = g.cfg.DefaultProvider
+func (g *Gateway) selectProvider(name string, ctx context.Context, req provider.ChatRequest) (*selector.Selection, error) {
+	if name != "" {
+		p, ok := g.providers[name]
+		if !ok {
+			return nil, fmt.Errorf("unknown provider: %s", name)
+		}
+		return &selector.Selection{
+			Provider: p,
+			Model:    req.Model,
+		}, nil
 	}
 
-	p, ok := g.providers[name]
-	if !ok {
-		return nil, fmt.Errorf("unknown provider: %s", name)
+	sel, err := g.selector.Select(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to select provider: %w", err)
 	}
-	return p, nil
+	return sel, nil
 }
 
 func (g *Gateway) ListModels() map[string][]string {
@@ -41,15 +51,17 @@ func (g *Gateway) ListModels() map[string][]string {
 }
 
 func (g *Gateway) Chat(ctx context.Context, providerName string, req provider.ChatRequest) (*provider.ChatResponse, error) {
-	p, err := g.getProvider(providerName)
+	sel, err := g.selectProvider(providerName, ctx, req)
 	if err != nil {
 		return nil, err
 	}
 
-	if !p.IsModelAllowed(req.Model) {
-		return nil, fmt.Errorf("model %q is not allowed for provider %s", req.Model, p.Name())
+	req.Model = sel.Model
+
+	if !sel.Provider.IsModelAllowed(req.Model) {
+		return nil, fmt.Errorf("model %q is not allowed for provider %s", req.Model, sel.Provider.Name())
 	}
 
-	return p.Chat(ctx, req)
+	return sel.Provider.Chat(ctx, req)
 
 }
