@@ -32,6 +32,27 @@ cp .env.example .env
 # edit .env if needed
 
 ---
+``` Test
+
+### 1.Let the selector decide (recommended) ###
+curl -X POST http://localhost:8080/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "messages": [
+      {"role": "user", "content": "Write a golang http server"}
+    ]
+  }'
+
+### 2. Force a specific provider ###
+  curl -X POST http://localhost:8080/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "provider": "ollama",
+    "model": "qwen2.5-coder:1.5b",
+    "messages": [
+      {"role": "user", "content": "Write a golang http server"}
+    ]
+  }'
 ```
 
 ---
