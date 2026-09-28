@@ -36,10 +36,10 @@ func (h *Handler) Chat(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if body.Model == "" || len(body.Messages) == 0 {
-		http.Error(w, "model and messages are required", http.StatusBadRequest)
-		return
-	}
+	// if body.Model == "" || len(body.Messages) == 0 {
+	// 	http.Error(w, "model and messages are required", http.StatusBadRequest)
+	// 	return
+	// }
 
 	req := provider.ChatRequest{
 		Model:       body.Model,
