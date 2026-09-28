@@ -1,20 +1,22 @@
 # GoLLMGateway
 
-Simple, maintainable **Go** gateway for local LLM backends (**Ollama** and **vLLM**).
+Simple and maintainable **Go** gateway for local LLM backends (**Ollama** + **vLLM**).
 
-It provides a unified HTTP API so your applications only need to talk to one endpoint, regardless of which backend is serving the request.
+It provides a unified HTTP API so your applications only need to talk to one endpoint.  
+When no provider is specified, a small model acts as a **selector** and decides which provider + model should handle the request.
 
 ---
 
 ## Features
 
-- Unified chat API for Ollama + vLLM
-- Provider selection per request (`"provider": "ollama"` or `"vllm"`)
-- Model allow-listing per provider
+- Unified chat API for Ollama and vLLM
+- **Intelligent provider/model selection** using a tiny LLM
+- Explicit provider selection still supported (`"provider": "ollama"` or `"vllm"`)
+- Model allow-listing per provider (strict – empty list is not allowed)
 - Clean configuration via environment variables / `.env`
 - Graceful shutdown
-- Docker & Docker Compose support
 - Health check + model listing endpoints
+- Docker & Docker Compose support for the backends
 
 ---
 
@@ -28,3 +30,55 @@ cd GoLLMGateway
 
 cp .env.example .env
 # edit .env if needed
+
+---
+``` Test
+
+### 1.Let the selector decide (recommended) ###
+curl -X POST http://localhost:8080/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "messages": [
+      {"role": "user", "content": "Write a golang http server"}
+    ]
+  }'
+
+### 2. Force a specific provider ###
+  curl -X POST http://localhost:8080/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "provider": "ollama",
+    "model": "qwen2.5-coder:1.5b",
+    "messages": [
+      {"role": "user", "content": "Write a golang http server"}
+    ]
+  }'
+```
+
+---
+                        ┌─────────────────────┐
+                        │   Client / App      │
+                        └─────────┬───────────┘
+                                  │
+                                  ▼
+                        ┌─────────────────────┐
+                        │   GoLLMGateway      │
+                        │  (HTTP :8080)       │
+                        └─────────┬───────────┘
+                                  │
+                    ┌─────────────┴─────────────┐
+                    │                           │
+          Explicit provider?              No provider
+                    │                           │
+                    ▼                           ▼
+          Use given provider          Tiny Model Selector
+          + given model               (decides provider + model)
+                    │                           │
+                    └─────────────┬─────────────┘
+                                  │
+                    ┌─────────────┴─────────────┐
+                    │                           │
+                    ▼                           ▼
+            ┌──────────────┐           ┌──────────────┐
+            │    Ollama    │           │     vLLM     │
+            └──────────────┘           └──────────────┘
