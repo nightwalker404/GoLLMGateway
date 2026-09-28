@@ -13,6 +13,7 @@ import (
 	"github.com/nightwalker404/llm-gateway/internal/provider"
 	"github.com/nightwalker404/llm-gateway/internal/provider/ollama"
 	"github.com/nightwalker404/llm-gateway/internal/provider/vllm"
+	"github.com/nightwalker404/llm-gateway/internal/selector"
 )
 
 func main() {
@@ -26,12 +27,18 @@ func main() {
 		"vllm":   vllm.New(cfg.VLLM),
 	}
 
-	gw := gateway.New(&cfg, providers)
+	sel, err := selector.New(cfg.Selector, providers)
+	if err != nil {
+		log.Fatalf("selector: %v", err)
+	}
 
+	gw := gateway.New(&cfg, providers, sel)
 	server := httpapi.NewServer(&cfg, gw)
 
 	go func() {
-		log.Printf("LLM Gateway started on %s | default provider: %s", cfg.ServerAddr, cfg.DefaultProvider)
+		log.Printf("LLM Gateway started on %s | selector: %s/%s",
+			cfg.ServerAddr, cfg.Selector.Provider, cfg.Selector.Model)
+
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("server error: %v", err)
 		}
